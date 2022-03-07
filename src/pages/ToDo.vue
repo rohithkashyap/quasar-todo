@@ -1,5 +1,5 @@
 <template>
-  <q-page class="bg-grey-3 column">
+  <q-page class="column">
     <div class="list scroll">
       <q-list bordered separator>
         <q-item
@@ -27,11 +27,11 @@
     </div>
 
     <div v-if="!taskList.length" class="absolute-center column notask">
-      <q-icon name="check" color="primary" size="5em" />
+      <q-icon name="check" color="positive" size="5em" />
       <p color="primary">No Tasks!</p>
     </div>
 
-    <q-footer elevated class="bg-white text-white">
+    <q-footer elevated class="bg-dark text-white">
       <q-input
         @keyup.enter="addTask"
         outlined
@@ -53,6 +53,15 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "PageIndex",
+  mounted() {
+    if (localStorage.getItem("taskList") !== null) {
+      let list = localStorage.getItem("taskList");
+      this.taskList = JSON.parse(list);
+    }
+  },
+  unmounted() {
+    this.updateLocalStorage();
+  },
   data() {
     return {
       newTask: "",
@@ -70,12 +79,24 @@ export default defineComponent({
         completed: false,
       });
       this.newTask = "";
-      console.log(this.taskList);
     },
 
     // Delete a task
     deleteTask(index) {
       this.taskList.splice(index, 1);
+    },
+
+    // Update localStorage
+    updateLocalStorage() {
+      localStorage.setItem("taskList", JSON.stringify(this.taskList));
+    },
+  },
+  watch: {
+    taskList: {
+      handler() {
+        this.updateLocalStorage();
+      },
+      deep: true,
     },
   },
 });
