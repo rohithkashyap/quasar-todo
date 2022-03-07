@@ -25,7 +25,7 @@ export default defineComponent({
       changelog: [
         {
           version: "0.0.2",
-          changes: ["Save tasks in localStorage"],
+          changes: ["Dark mode", "Save tasks in localStorage"],
         },
         {
           version: "0.0.1",
