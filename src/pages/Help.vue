@@ -16,23 +16,28 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "PageIndex",
-  data() {
+export default {
+  setup() {
+    const changelog = ref([
+      {
+        version: "0.0.3",
+        changes: ["Use composition API"],
+      },
+      {
+        version: "0.0.2",
+        changes: ["Dark mode", "Save tasks in localStorage"],
+      },
+      {
+        version: "0.0.1",
+        changes: ["Base app"],
+      },
+    ]);
+
     return {
-      changelog: [
-        {
-          version: "0.0.2",
-          changes: ["Dark mode", "Save tasks in localStorage"],
-        },
-        {
-          version: "0.0.1",
-          changes: ["Base app"],
-        },
-      ],
+      changelog,
     };
   },
-});
+};
 </script>

@@ -49,57 +49,112 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { ref, onMounted, watch } from "vue";
 
-export default defineComponent({
-  name: "PageIndex",
-  mounted() {
-    if (localStorage.getItem("taskList") !== null) {
-      let list = localStorage.getItem("taskList");
-      this.taskList = JSON.parse(list);
-    }
-  },
-  unmounted() {
-    this.updateLocalStorage();
-  },
-  data() {
-    return {
-      newTask: "",
-      taskList: [],
-    };
-  },
-  methods: {
+// Composition API
+export default {
+  setup() {
+    const newTask = ref("");
+    const taskList = ref([]);
+
+    onMounted(() => {
+      if (localStorage.getItem("taskList") !== null) {
+        let list = localStorage.getItem("taskList");
+        console.log(list);
+        taskList.value = JSON.parse(list);
+      }
+    });
+
     // Add a task
-    addTask() {
-      if (this.newTask.length == 0) {
+    const addTask = () => {
+      if (newTask.value.length == 0) {
         return;
       }
-      this.taskList.push({
-        title: this.newTask,
+      taskList.value.push({
+        title: newTask.value,
         completed: false,
       });
-      this.newTask = "";
-    },
+      newTask.value = "";
+      updateLocalStorage();
+    };
 
     // Delete a task
-    deleteTask(index) {
-      this.taskList.splice(index, 1);
-    },
+    const deleteTask = (index) => {
+      taskList.value.splice(index, 1);
+    };
 
     // Update localStorage
-    updateLocalStorage() {
-      localStorage.setItem("taskList", JSON.stringify(this.taskList));
-    },
-  },
-  watch: {
-    taskList: {
-      handler() {
-        this.updateLocalStorage();
+    const updateLocalStorage = () => {
+      localStorage.setItem("taskList", JSON.stringify(taskList.value));
+    };
+
+    watch(
+      taskList,
+      () => {
+        updateLocalStorage();
       },
-      deep: true,
-    },
+      { deep: true }
+    );
+
+    return {
+      newTask,
+      taskList,
+      addTask,
+      deleteTask,
+    };
   },
-});
+};
+
+// Options API
+// export default defineComponent({
+//   name: "PageIndex",
+//   mounted() {
+// if (localStorage.getItem("taskList") !== null) {
+//   let list = localStorage.getItem("taskList");
+//   this.taskList = JSON.parse(list);
+// }
+//   },
+//   unmounted() {
+//     this.updateLocalStorage();
+//   },
+//   data() {
+//     return {
+//       newTask: "",
+//       taskList: [],
+//     };
+//   },
+//   methods: {
+// // Add a task
+// addTask() {
+//   if (this.newTask.length == 0) {
+//     return;
+//   }
+//   this.taskList.push({
+//     title: this.newTask,
+//     completed: false,
+//   });
+//   this.newTask = "";
+// },
+
+//     // Delete a task
+// deleteTask(index) {
+//   this.taskList.splice(index, 1);
+// },
+
+//   // Update localStorage
+//   updateLocalStorage() {
+//     localStorage.setItem("taskList", JSON.stringify(this.taskList));
+//   },
+// },
+//   watch: {
+//     taskList: {
+//       handler() {
+//         this.updateLocalStorage();
+//       },
+//       deep: true,
+//     },
+//   },
+// });
 </script>
 
 <style lang="scss">
