@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header>
       <q-toolbar>
         <q-btn
           flat
@@ -11,14 +11,17 @@
           @click="toggleLeftDrawer"
         />
         <q-toolbar-title> To Do </q-toolbar-title>
-        <div>v0.0.3</div>
+        <div v-if="userName">
+          Hi, {{ userName }}!
+          <q-btn flat dense round icon="logout" @click="signOut"></q-btn>
+        </div>
       </q-toolbar>
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" :width="200" :breakpoint="500">
       <q-scroll-area class="fit">
-        <q-list padding class="menu-list">
-          <q-item clickable v-ripple to="/">
+        <q-list highlight padding class="menu-list">
+          <q-item exact clickable v-ripple to="/">
             <q-item-section avatar>
               <q-icon name="list" />
             </q-item-section>
@@ -26,7 +29,7 @@
             <q-item-section> To do </q-item-section>
           </q-item>
 
-          <q-item clickable v-ripple to="/help">
+          <q-item exact clickable v-ripple to="/help">
             <q-item-section avatar>
               <q-icon name="help" />
             </q-item-section>
@@ -38,15 +41,14 @@
     </q-drawer>
 
     <q-page-container>
-      <keep-alive>
-        <router-view />
-      </keep-alive>
+      <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
+import { useUserStore } from "src/stores/user";
 
 export default defineComponent({
   name: "MainLayout",
@@ -55,9 +57,24 @@ export default defineComponent({
 
   setup() {
     const leftDrawerOpen = ref(false);
+    const userStore = useUserStore();
+    const userName = computed(() => {
+      const user = userStore.user;
+      if (user && user.displayName) {
+        return user.displayName.split(" ")[0];
+      }
+      return "";
+    });
+
+    const signOut = () => {
+      userStore.signOut();
+    };
 
     return {
       leftDrawerOpen,
+      userStore,
+      userName,
+      signOut,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },
