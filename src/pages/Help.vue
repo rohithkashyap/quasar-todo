@@ -44,13 +44,13 @@ export default {
         text: [
           "To add a new category, click the + button in the category tabs.",
           "You cannot edit a category name yet.",
-          "To delete it, press and hold the category name. If you delete a category, ALL TODOS UNDER IT WILL BE DELETED FOREVER!",
+          "To delete it, press the edit tab. If you delete a category, ALL TODOS UNDER IT WILL BE DELETED FOREVER!",
         ],
       },
       {
         title: "To Dos",
         text: [
-          "To edit a todo, press and hold it.",
+          "To edit a todo, press it.",
           "To complete the todo, press the checkbox.",
           "To undo completed todo, press the checkbox again.",
           "To add a new todo, enter todo title in the input at the bottom of the screen, and hit enter.",
@@ -58,6 +58,14 @@ export default {
       },
     ]);
     const changelog = ref([
+      {
+        version: "1.0.1",
+        changes: [
+          "Allows moving todo to a different category",
+          "Streamlined prompts",
+          "Added better way to edit todos and delete category",
+        ],
+      },
       {
         version: "1.0.0",
         changes: [
