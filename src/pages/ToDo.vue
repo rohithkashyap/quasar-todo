@@ -1,5 +1,5 @@
 <template>
-  <q-page class="column">
+  <q-page v-touch-swipe.mouse.right.left="handleSwipe">
     <q-tabs
       v-if="loggedIn"
       v-model="activeCategory"
@@ -9,23 +9,22 @@
       no-caps
     >
       <q-tab
-        v-for="(tab, index) in categories"
+        v-for="tab in categories"
         :name="tab.name"
         :label="tab.name"
         :key="tab.name"
-        @mousedown="startCategoryTimer(index)"
-        @touchstart="startCategoryTimer(index)"
-        @mouseup="cancelCategoryTimer"
-        @touchend="cancelCategoryTimer"
       />
       <!-- Add New tab -->
-      <q-tab @click="addNewTab">
+      <q-tab @click="addingCategory = true">
         <q-icon name="add" />
+      </q-tab>
+      <q-tab @click="editingCategories = true">
+        <q-icon name="edit" />
       </q-tab>
     </q-tabs>
 
     <div v-if="loggedIn">
-      <div class="list scroll">
+      <div class="list scroll q-mb-xl">
         <q-list bordered separator>
           <q-item
             v-for="(task, index) in taskList"
@@ -42,27 +41,12 @@
               />
             </q-item-section>
             <q-item-section :class="{ completed: task.completed }">
-              <template v-if="task.editing && !task.completed">
-                <q-input
-                  v-model="task.title"
-                  @keyup.enter="saveTask(index)"
-                  @blur="saveTask(index)"
-                  dense
-                  autofocus
-                />
-              </template>
-              <template v-else>
-                <q-item-label
-                  @click="handleTodoClick(index)"
-                  @mousedown="startTodoTimer(index, $event)"
-                  @touchstart="startTodoTimer(index, $event)"
-                  @mouseup="cancelTodoTimer"
-                  @touchend="cancelTodoTimer"
-                  :class="{ 'cursor-pointer': !task.completed }"
-                >
-                  {{ task.title }}
-                </q-item-label>
-              </template>
+              <q-item-label
+                @click.stop="handleTodoClick(index)"
+                :class="{ 'cursor-pointer': !task.completed }"
+              >
+                {{ task.title }}
+              </q-item-label>
             </q-item-section>
             <q-item-section side v-if="task.completed">
               <q-btn flat @click="deleteTask(index)" icon="delete" />
@@ -76,7 +60,126 @@
         <p color="primary">No Tasks!</p>
       </div>
 
-      <q-footer elevated class="bg-dark text-white">
+      <!-- Add a task -->
+      <q-dialog v-if="loggedIn" v-model="seamless" seamless position="bottom">
+        <q-card style="width: 100%">
+          <q-input
+            @keyup.enter="addTask"
+            outlined
+            clearable
+            clear-icon="close"
+            v-model="newTask"
+            placeholder="Add a task"
+          >
+            <template v-slot:append>
+              <q-btn @click="addTask" round dense flat icon="add" />
+            </template>
+          </q-input>
+        </q-card>
+      </q-dialog>
+
+      <!-- Edit a task -->
+      <q-dialog v-model="editingTask">
+        <q-card style="width: 100%">
+          <q-card-section>
+            <div class="text-h6">Edit To Do</div>
+            <div class="q-pa-md">
+              <q-select
+                v-model="editedTask.category"
+                :options="categoryOptions"
+                label="Select a category"
+              />
+
+              <q-input
+                @keyup.enter="saveTask"
+                autofocus
+                clearable
+                label="Update todo text"
+                clear-icon="close"
+                v-model="editedTask.title"
+                placeholder="Edit existing task"
+              >
+              </q-input>
+            </div>
+          </q-card-section>
+          <q-card-actions align="right" class="text-primary">
+            <q-btn color="primary" label="Cancel" v-close-popup />
+            <q-btn
+              color="positive"
+              label="Save"
+              @click="saveTask"
+              v-close-popup
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Add a category -->
+      <q-dialog v-model="addingCategory">
+        <q-card style="width: 100%">
+          <q-card-section>
+            <div class="text-h6">Add a new category</div>
+            <div class="q-pa-md">
+              <q-input
+                @keyup.enter="addNewTab"
+                autofocus
+                clearable
+                label="Category name"
+                clear-icon="close"
+                v-model="newCategoryName"
+                placeholder="Category name"
+              >
+              </q-input>
+            </div>
+          </q-card-section>
+          <q-card-actions align="right" class="text-primary">
+            <q-btn
+              color="primary"
+              label="Cancel"
+              @click="goToLastActiveCategory"
+              v-close-popup
+            />
+            <q-btn
+              color="positive"
+              label="Save"
+              @click="addNewTab"
+              v-close-popup
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Delete a category -->
+      <q-dialog v-model="editingCategories">
+        <q-card style="width: 100%">
+          <q-card-section>
+            <div class="text-h6">Delete a category</div>
+            <div class="q-pa-md">
+              <q-select
+                v-model="categoryToDelete"
+                :options="categoryOptions"
+                label="Select a category to delete"
+              />
+            </div>
+          </q-card-section>
+          <q-card-actions align="right" class="text-primary">
+            <q-btn
+              color="primary"
+              label="Cancel"
+              @click="goToLastActiveCategory"
+              v-close-popup
+            />
+            <q-btn
+              color="negative"
+              label="Delete"
+              @click="deleteSelectedCategory"
+              v-close-popup
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- <q-footer elevated class="bg-dark text-white">
         <q-input
           @keyup.enter="addTask"
           outlined
@@ -89,7 +192,7 @@
             <q-btn @click="addTask" round dense flat icon="add" />
           </template>
         </q-input>
-      </q-footer>
+      </q-footer> -->
     </div>
     <div v-else class="absolute-center column">
       <q-card>
@@ -101,7 +204,7 @@
         <q-card-actions vertical>
           <q-btn
             @click="login"
-            color="primary"
+            color="blue-10"
             label="Login via Google"
             no-caps
           />
@@ -143,18 +246,29 @@ export default {
     const newTask = ref("");
     const taskList = ref([]);
     const categories = ref([]);
+    const categoryOptions = computed(() => {
+      return categories.value.map((category) => ({
+        label: category.name,
+        value: category.name,
+      }));
+    });
     const activeCategory = ref("");
     const lastActiveCategory = ref("");
     let categoriesListener = null;
     let todosListener = null;
+    const seamless = true;
+    let editingTask = ref(false);
+    let editedTask = ref(null);
+    let addingCategory = ref(false);
+    let newCategoryName = ref("");
+    let editingCategories = ref(false);
+    let categoryToDelete = ref("");
 
     const notify = useQuasar();
     const userStore = useUserStore();
     const loggedIn = computed(() => {
       return userStore.isAuthenticated;
     });
-    let categoryLongPressTimer = null;
-    let todoLongPressTimer = null;
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -387,33 +501,16 @@ export default {
       }
     };
 
-    const startTodoTimer = (index, event) => {
-      event.preventDefault();
-      todoLongPressTimer = setTimeout(() => {
-        editTask(index);
-      }, 1000); // Adjust the delay (in milliseconds) for long press detection
-    };
-
     const handleTodoClick = (index) => {
-      if (todoLongPressTimer) {
-        cancelTodoTimer();
+      if (taskList.value[index].completed) {
+        return;
       }
-
-      taskList.value.at(index).completed = !taskList.value.at(index).completed;
-      completeTask(index);
+      editedTask.value = taskList.value[index];
+      editedTask.value.category = activeCategory.value;
+      editingTask.value = true;
     };
 
-    const cancelTodoTimer = () => {
-      clearTimeout(todoLongPressTimer);
-      todoLongPressTimer = null;
-    };
-
-    const editTask = (index) => {
-      taskList.value[index].editing = true;
-    };
-
-    const saveTask = async (index) => {
-      taskList.value[index].editing = false;
+    const saveTask = async () => {
       const userId = auth.currentUser.uid;
       const userTodoDocRef = doc(
         db,
@@ -422,16 +519,41 @@ export default {
         "categories",
         activeCategory.value,
         "todos",
-        taskList.value.at(index).id
+        editedTask.value.id
       );
-
-      try {
-        await updateDoc(userTodoDocRef, {
-          title: taskList.value.at(index).title,
-        });
-      } catch (error) {
-        notifyFail(error);
+      // Same category, updated title
+      if (!editedTask.value.category.value) {
+        try {
+          await updateDoc(userTodoDocRef, {
+            title: editedTask.value.title,
+          });
+          notifySuccess(`Updated todo!`);
+        } catch (error) {
+          notifyFail(error);
+        }
       }
+      // New category
+      else {
+        console.log("New cat", editedTask.value.category.value);
+        const docSnapshot = await getDoc(userTodoDocRef);
+        const docData = docSnapshot.data();
+
+        // Create a new document in the destination collection
+        const newDocRef = doc(
+          db,
+          "users",
+          userId,
+          "categories",
+          editedTask.value.category.value,
+          "todos",
+          editedTask.value.id
+        );
+        await setDoc(newDocRef, docData);
+        await deleteDoc(userTodoDocRef);
+        notifySuccess(`Moved todo to ${editedTask.value.category.value}!`);
+      }
+      editedTask = null;
+      editingTask = false;
     };
 
     const addNewCategory = async (newCategory) => {
@@ -473,33 +595,39 @@ export default {
       }
     };
 
-    const addNewTab = () => {
-      const newTabName = prompt("Enter a name for the new category");
-      if (!newTabName) {
-        activeCategory.value = lastActiveCategory.value;
+    const goToLastActiveCategory = () => {
+      activeCategory.value = lastActiveCategory.value;
+    };
+
+    const addNewTab = async () => {
+      addingCategory.value = false;
+      if (!newCategoryName.value) {
+        goToLastActiveCategory();
+        newCategoryName.value = "";
         return;
       }
 
-      isCategoryExists(newTabName)
-        .then((exists) => {
-          if (exists) {
-            notifyFail("Category already exists!");
-            activeCategory.value = lastActiveCategory.value;
-          } else {
-            addNewCategory(newTabName);
-          }
-        })
-        .catch((error) => {
-          notifyFail("Error checking category existence: " + error);
-          activeCategory.value = lastActiveCategory.value;
-        });
+      try {
+        const exists = await isCategoryExists(newCategoryName.value);
+        if (exists) {
+          notifyFail("Category already exists!");
+          goToLastActiveCategory();
+        } else {
+          await addNewCategory(newCategoryName.value);
+        }
+      } catch (error) {
+        notifyFail("Error checking category existence: " + error);
+        goToLastActiveCategory();
+      }
+
+      newCategoryName.value = "";
     };
 
     // Failed notification
     const notifyFail = (error) => {
       notify.notify({
         message: "Failed! " + error,
-        color: "red",
+        color: "negative",
         icon: "error_outline",
         position: "top-right",
       });
@@ -509,36 +637,24 @@ export default {
     const notifySuccess = (info) => {
       notify.notify({
         message: info,
-        color: "green",
+        color: "positive",
         icon: "published_with_changes",
         position: "top-right",
       });
     };
 
-    const startCategoryTimer = (index) => {
-      categoryLongPressTimer = setTimeout(() => {
-        const categoryId = categories.value.at(index).name; // Specify the category ID
+    const deleteSelectedCategory = () => {
+      const categoryId = categoryToDelete.value.value;
+      const userId = auth.currentUser.uid;
 
-        const result = window.confirm(
-          `Are you sure you want to delete the category "${categoryId}"? All todos under this category will be deleted forever!`
-        );
-        if (result) {
-          const userId = auth.currentUser.uid;
-
-          deleteCategoryAndSubcollections(userId, categoryId)
-            .then(() => {
-              notifySuccess("Deleted category and all todos in it.");
-            })
-            .catch((error) => {
-              notifyFail("Error deleting category: " + error);
-            });
-        }
-      }, 1000); // Adjust the delay (in milliseconds) for long press detection
-    };
-
-    const cancelCategoryTimer = () => {
-      clearTimeout(categoryLongPressTimer);
-      categoryLongPressTimer = null;
+      deleteCategoryAndSubcollections(userId, categoryId)
+        .then(() => {
+          notifySuccess("Deleted category and all todos in it.");
+        })
+        .catch((error) => {
+          notifyFail("Error deleting category: " + error);
+        });
+      categoryToDelete.value = "";
     };
 
     const deleteCategoryAndSubcollections = async (userId, categoryId) => {
@@ -561,10 +677,30 @@ export default {
       });
     };
 
+    const handleSwipe = ({ evt, ...newInfo }) => {
+      const activeCategoryIndex = categories.value.findIndex(
+        (category) => category.name === activeCategory.value
+      );
+      if (newInfo.direction == "right") {
+        if (activeCategoryIndex > 0) {
+          activeCategory.value = categories.value.at(
+            activeCategoryIndex - 1
+          ).name;
+        }
+      } else {
+        if (activeCategoryIndex < categories.value.length - 1) {
+          activeCategory.value = categories.value.at(
+            activeCategoryIndex + 1
+          ).name;
+        }
+      }
+    };
+
     return {
       newTask,
       taskList,
       categories,
+      categoryOptions,
       activeCategory,
       loggedIn,
       login,
@@ -572,14 +708,19 @@ export default {
       deleteTask,
       completeTask,
       notify,
-      editTask,
       saveTask,
       addNewTab,
-      startCategoryTimer,
-      cancelCategoryTimer,
-      startTodoTimer,
-      cancelTodoTimer,
       handleTodoClick,
+      handleSwipe,
+      seamless,
+      editingTask,
+      editedTask,
+      addingCategory,
+      newCategoryName,
+      goToLastActiveCategory,
+      editingCategories,
+      categoryToDelete,
+      deleteSelectedCategory,
     };
   },
 };
