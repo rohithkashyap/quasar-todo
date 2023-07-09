@@ -3,7 +3,7 @@
     <q-tabs
       v-if="loggedIn"
       v-model="activeCategory"
-      class="bg-primary text-white shadow-2"
+      class="bg-grey-9 text-white shadow-2"
       mobile-arrows
       outside-arrows
       no-caps
@@ -59,24 +59,6 @@
         <q-icon name="check" color="positive" size="xl" />
         <p color="primary">No Tasks!</p>
       </div>
-
-      <!-- Add a task -->
-      <q-dialog v-if="loggedIn" v-model="seamless" seamless position="bottom">
-        <q-card style="width: 100%">
-          <q-input
-            @keyup.enter="addTask"
-            outlined
-            clearable
-            clear-icon="close"
-            v-model="newTask"
-            placeholder="Add a task"
-          >
-            <template v-slot:append>
-              <q-btn @click="addTask" round dense flat icon="add" />
-            </template>
-          </q-input>
-        </q-card>
-      </q-dialog>
 
       <!-- Edit a task -->
       <q-dialog v-model="editingTask">
@@ -179,7 +161,7 @@
         </q-card>
       </q-dialog>
 
-      <!-- <q-footer elevated class="bg-dark text-white">
+      <q-footer class="bg-dark text-white">
         <q-input
           @keyup.enter="addTask"
           outlined
@@ -192,7 +174,7 @@
             <q-btn @click="addTask" round dense flat icon="add" />
           </template>
         </q-input>
-      </q-footer> -->
+      </q-footer>
     </div>
     <div v-else class="absolute-center column">
       <q-card>
@@ -215,7 +197,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, watchEffect, onUnmounted } from "vue";
+import { ref, computed, watch, onUnmounted } from "vue";
 import { useQuasar } from "quasar";
 import {
   ToDo,
@@ -256,7 +238,6 @@ export default {
     const lastActiveCategory = ref("");
     let categoriesListener = null;
     let todosListener = null;
-    const seamless = true;
     let editingTask = ref(false);
     let editedTask = ref(null);
     let addingCategory = ref(false);
@@ -552,8 +533,8 @@ export default {
         await deleteDoc(userTodoDocRef);
         notifySuccess(`Moved todo to ${editedTask.value.category.value}!`);
       }
-      editedTask = null;
-      editingTask = false;
+      editedTask.value = null;
+      editingTask.value = false;
     };
 
     const addNewCategory = async (newCategory) => {
@@ -712,7 +693,6 @@ export default {
       addNewTab,
       handleTodoClick,
       handleSwipe,
-      seamless,
       editingTask,
       editedTask,
       addingCategory,
