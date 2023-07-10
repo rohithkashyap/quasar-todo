@@ -274,20 +274,14 @@ export default {
               // Create "My list" category and todos collection
               const myListCategoryRef = doc(categoriesRef, "My list");
 
-              const newCat = new Category("My list", Date.now());
+              const newCat = new Category("My list", 0);
               await setDoc(
                 myListCategoryRef,
                 categoryConverter.toFirestore(newCat)
               );
 
               const todosCollectionRef = collection(myListCategoryRef, "todos");
-              const newTodo = new ToDo(
-                "123",
-                Date.now(),
-                "My first todo",
-                false,
-                ""
-              );
+              const newTodo = new ToDo("123", 0, "My first todo", false, "");
               await addDoc(
                 todosCollectionRef,
                 todoConverter.toFirestore(newTodo)
